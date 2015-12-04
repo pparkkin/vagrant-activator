@@ -1,0 +1,60 @@
+---
+
+- hosts: all
+  tasks:
+
+  - name: Install dependencies
+    apt: name="{{item}}"
+         state=installed
+         update_cache=yes
+    with_items:
+      - unzip
+    sudo: yes
+
+  - name: Download Oracle JDK
+    command: "wget --no-check-certificate --no-cookies --header 'Cookie: oraclelicense=accept-securebackup-cookie' http://download.oracle.com/otn-pub/java/jdk/8u65-b17/jdk-8u65-linux-x64.tar.gz"
+    args:
+      chdir: "/tmp"
+      creates: "/tmp/jdk-8u65-linux-x64.tar.gz"
+
+  - name: Unpack Oracle JDK
+    unarchive: src=/tmp/jdk-8u65-linux-x64.tar.gz
+               copy=no
+               dest=/opt
+               creates=/opt/jdk1.8.0_65
+    sudo: yes
+
+  - name: Set JAVA_HOME and PATH
+    lineinfile: dest=~/.bashrc
+                line="{{item}}"
+                state=present
+    with_items:
+      - "export JAVA_HOME=/opt/jdk1.8.0_65"
+      - "export PATH=$JAVA_HOME/bin:$PATH"
+
+  - name: Download Typesafe Activator
+    command: "wget https://downloads.typesafe.com/typesafe-activator/1.3.7/typesafe-activator-1.3.7-minimal.zip"
+    args:
+      chdir: "/tmp"
+      creates: "/tmp/typesafe-activator-1.3.7-minimal.zip"
+
+  - name: Unpack Typesafe Activator
+    unarchive: src=/tmp/typesafe-activator-1.3.7-minimal.zip
+               copy=no
+               dest=/opt
+               creates=/opt/activator-1.3.7-minimal
+    sudo: yes
+
+  - name: Set activator permissions
+    file: path=/opt/activator-1.3.7-minimal/activator
+          mode=755
+    sudo: yes
+
+  - name: Set ACTIVATOR_HOME and PATH
+    lineinfile: dest=~/.bashrc
+                line="{{item}}"
+                state=present
+    with_items:
+      - "export ACTIVATOR_HOME=/opt/activator-1.3.7-minimal"
+      - "export PATH=$ACTIVATOR_HOME:$PATH"
+
